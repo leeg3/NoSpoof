@@ -10,22 +10,88 @@ sudo python3 detectARPSpoof.py
 
 """
 
-# import os, time, netifaces, sys, logging
-import os, time, sys, logging
-from sys import platform
-# from scapy.all import sniff
+import os, time, netifaces, sys, logging, ctypes, AppKit
+# import os, time, sys, logging
+import platform
+from scapy.all import sniff
 
+requests = []
+replies_count = {}
+notification_issued = []
 
-def getAccountPrivileges():
+def MacSpoofScanner():
+    # determine if user has root permissions
     if os.geteuid() != 0:
-	       exit("Root permisson is needed to interact with network interfaces. \nNow Aborting.")
+	       exit("Root permisson is needed to manage network interfaces. Aborting.")
     else:
-        print("Current user has necessary permission.")
+        print("Current user has necessary permissions.")
+
+    # format log
+    formatLog()
+
+    # do scanner things
+
+
+    # if spoof detected, then issue a notification
+    macNotification()
+
+
+def getAccountPrivilegesWindows():
+    if ctypes.windll.shell32.IsUserAnAdmin() != 0:
+        exit("Admin permission is needed to manage network interfaces. Aborting.")
+    else:
+        print("Current user has necessary permisisons.")
+
+    formatLog()
+
+
+def formatLog():
+    # define logging format
+    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename="ARP log.txt", filemode="a", level=logging.DEBUG)
+
+    # import available network interfaces
+    available_interfaces = netifaces.interfaces()
+
+    # Ask user for desired interface
+    interface = input("Please select the interface you wish to use. {}\n".format(str(available_interfaces)))
+
+    # Check if specified interface is valid
+    if not interface in available_interfaces:
+        exit("Interface {} not available.".format(interface))
+
+    # Retrieve network addresses (IP, broadcast) from the network interfaces
+    addrs = netifaces.ifaddresses(interface)
+    try:
+        local_ip = addrs[netifaces.AF_INET][0]["addr"]
+        broadcast = addrs[netifaces.AF_INET][0]["broadcast"]
+    except KeyError:
+        exit("Cannot read address/broadcast address on interface {}".format(interface))
+
+def macNotification(title, subtitle, content):
+    # init OS X notification center
+    notification_center = AppKit.NSUserNotificationCenter.defaultUserNotificationCenter()
+
+    # create a new notification and set title, subtitle and content
+    notification = AppKit.NSUserNotification.alloc().init()
+    notification.setTitle_(title)
+    notification.setSubtitle_(subtitle)
+    notification.setInformativeText_(content)
+
+    # display to user 
+    notification_center.deliverNotification_(notification)
+
 
 def main():
 
-    # on mac get account privileges
-    getAccountPrivileges()
+    system_os = platform.system()
+
+    # Determine system OS and execute appropriate function
+    if system_os == 'Darwin': # Mac
+        MacSpoofScanner()
+    elif system_os == 'Windows': # Windows
+        getAccountPrivilegesWindows()
+    else:
+        print("Operating System not supported")
 
     # retrieve log name from user
     # log_name = input("Enter a name for the log file: ")
@@ -34,10 +100,6 @@ def main():
     # if log_name == "":
     print("Info will be stored in a log titled \"ARP log.txt\"")
     #    log_name = "ARP log.txt"
-
-
-
-
 
 
 
