@@ -10,7 +10,7 @@ sudo python3 detectARPSpoof.py
 
 """
 
-import os, time, netifaces, sys, logging, ctypes, AppKit
+import os, time, netifaces, sys, logging, ctypes #, AppKit
 # import os, time, sys, logging
 import platform
 from scapy.all import sniff
@@ -19,6 +19,9 @@ requests = []
 replies_count = {}
 notification_issued = []
 
+ipaddr = ""
+broadcast = ""
+
 def MacSpoofScanner():
     # determine if user has root permissions
     if os.geteuid() != 0:
@@ -26,23 +29,56 @@ def MacSpoofScanner():
     else:
         print("Current user has necessary permissions.")
 
+    print("Info will be stored in a log titled \"Mac ARP log.txt\"")
+
+    macNotification("TEST", "TEST", "THIS IS A TESET")
+    
     # format log
     formatLog()
 
     # do scanner things
-
+    sniff(filter = "arp", prn = packet_filter, store = 0)
 
     # if spoof detected, then issue a notification
     macNotification()
 
 
-def getAccountPrivilegesWindows():
-    if ctypes.windll.shell32.IsUserAnAdmin() != 0:
-        exit("Admin permission is needed to manage network interfaces. Aborting.")
-    else:
-        print("Current user has necessary permisisons.")
+def check_spoof (source, mac, destination):
+    # Function checks if a specific ARP reply is part of an ARP spoof attack or not
+    if destination == broadcast:
+        if not mac in replies_count:
+            replies_count[mac] = 0
 
-    formatLog()
+    if not source in requests and source != local_ip:
+        if not mac in replies_count:
+            replies_count[mac] = 0
+        else:
+            replies_count[mac] += 1
+        # Logs ARP Reply
+        logging.warning("ARP replies detected from MAC {}. Request count {}".format(mac, replies_count[mac]))
+
+        if (replies_count[mac] > request_threshold) and (not mac in notification_issued):
+            # Check number of replies reaches threshold or not, and whether or not we have sent a notification for this MAC addr
+            logging.error("ARP Spoofing Detected from MAC Address {}".format(mac)) # Logs the attack in the log file
+            # Issue OS Notification
+            macNotification("ARP Spoofing Detected", "The current network is being attacked.", "ARP Spoofing Attack Detected from {}.".format(mac))
+            # Add to sent list to prevent repeated notifications.
+            notification_issued.append(mac)
+    else:
+        if source in requests:
+            requests.remove(source)
+
+
+def packet_filter (packet):
+    # Retrieve necessary parameters from packet
+    source = packet.sprintf("%ARP.psrc%")
+    destination = packet.sprintf("%ARP.pdst%")
+    source_mac = packet.sprintf("%ARP.hwsrc%")
+    op = packet.sprintf("%ARP.op%")
+    if source == ipaddr:
+        requests.append(destination)
+    if op == 'is-at':
+        return check_spoof (source, source_mac, destination)
 
 
 def formatLog():
@@ -62,7 +98,7 @@ def formatLog():
     # Retrieve network addresses (IP, broadcast) from the network interfaces
     addrs = netifaces.ifaddresses(interface)
     try:
-        local_ip = addrs[netifaces.AF_INET][0]["addr"]
+        ipaddr = addrs[netifaces.AF_INET][0]["addr"]
         broadcast = addrs[netifaces.AF_INET][0]["broadcast"]
     except KeyError:
         exit("Cannot read address/broadcast address on interface {}".format(interface))
@@ -77,7 +113,7 @@ def macNotification(title, subtitle, content):
     notification.setSubtitle_(subtitle)
     notification.setInformativeText_(content)
 
-    # display to user 
+    # display to user
     notification_center.deliverNotification_(notification)
 
 
@@ -92,14 +128,6 @@ def main():
         getAccountPrivilegesWindows()
     else:
         print("Operating System not supported")
-
-    # retrieve log name from user
-    # log_name = input("Enter a name for the log file: ")
-
-    # if no user input then file will be called ARP log.txt
-    # if log_name == "":
-    print("Info will be stored in a log titled \"ARP log.txt\"")
-    #    log_name = "ARP log.txt"
 
 
 
