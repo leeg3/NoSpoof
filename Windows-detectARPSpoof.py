@@ -10,97 +10,125 @@ sudo python3 detectARPSpoof.py
 
 """
 
-import os, time, netifaces, sys, logging, ctypes, win10toast 
-# import os, time, sys, logging
-import platform
+import os, time, netifaces, sys, logging, ctypes, platform
+from win10toast import ToastNotifier
 from scapy.all import sniff
 
+ipaddr = ""
+broadcast = ""
 requests = []
 replies_count = {}
 notification_issued = []
 
-def MacSpoofScanner():
-    # determine if user has root permissions
-    if os.geteuid() != 0:
-	       exit("Root permisson is needed to manage network interfaces. Aborting.")
-    else:
-        print("Current user has necessary permissions.")
 
-    # format log
-    formatLog()
-
-    # do scanner things
-
-
-    # if spoof detected, then issue a notification
-    macNotification()
-
-
-def getAccountPrivilegesWindows():
+def WindowsSpoofScanner():
+    # determine if the user has Admin permission. If not then exit
     if ctypes.windll.shell32.IsUserAnAdmin() != 0:
         exit("Admin permission is needed to manage network interfaces. Aborting.")
     else:
         print("Current user has necessary permisisons.")
 
+    # format log
     formatLog()
+
+    print("ARP Spoofing Detection Started. Any output is redirected to log file.")
+
+    # sniff is used to sniff the packets and send them to the packet_filter
+    sniff(filter = "arp", prn = packet_filter, store = 0)
+
+
+def check_spoof (source, mac, destination):
+    # Function checks if a specific ARP reply is part of an ARP spoof attack or not
+    if destination == broadcast:
+        if not mac in replies_count:
+            replies_count[mac] = 0
+
+    if not source in requests and source != local_ip:
+        if not mac in replies_count:
+            replies_count[mac] = 0
+        else:
+            replies_count[mac] += 1
+
+        # Logs ARP Reply
+        logging.warning("ARP replies detected from MAC {}. Request count {}".format(mac, replies_count[mac]))
+
+        if (replies_count[mac] > request_threshold) and (not mac in notification_issued):
+            # Check number of replies reaches threshold or not, and whether or not we have sent a notification for this MAC addr
+            logging.error("ARP Spoofing Detected from MAC Address {}".format(mac)) # Logs the attack in the log file
+            # Issue OS Notification
+            #issue_os_notification("ARP Spoofing Detected", "The current network is being attacked.", "ARP Spoofing Attack Detected from {}.".format(mac))
+            sendNotification(mac)
+            # Add to sent list to prevent repeated notifications.
+            notification_issued.append(mac)
+    else:
+        if source in requests:
+            requests.remove(source)
+
+
+def packet_filter (packet):
+    # Retrieve necessary parameters from packet
+    source = packet.sprintf("%ARP.psrc%")
+    destination = packet.sprintf("%ARP.pdst%")
+    source_mac = packet.sprintf("%ARP.hwsrc%")
+    op = packet.sprintf("%ARP.op%")
+
+    # send packets to be checked for spoofing
+    if source == ipaddr:
+        requests.append(destination)
+    if op == 'is-at':
+        return check_spoof (source, source_mac, destination)
+
+
+
+def sendNotification():
+    toaster = ToastNotifier()
+    toaster.show_toast("ARPSpoofing Detected", "ARPSpoofing attack detected from {}.".format(mac))
 
 
 def formatLog():
     # define logging format
-    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename="ARP log.txt", filemode="a", level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s: %(message)s', filename="Windows ARP log.txt")
 
-    # import available network interfaces
-    available_interfaces = netifaces.interfaces()
+    # import connected network interfaces into a list
+    networkInterfaces = netifaces.interfaces()
 
-    # Ask user for desired interface
-    interface = input("Please select the interface you wish to use. {}\n".format(str(available_interfaces)))
+    # output all network interfaces
+    num = 0
+    print("Available network interfaces")
+    for elem in networkInterfaces:
+        print("[{}]: {}".format(num, networkInterfaces[num]))
+        num+=1
 
-    # Check if specified interface is valid
-    if not interface in available_interfaces:
-        exit("Interface {} not available.".format(interface))
+    # decrement num by 1
+    num-=1
+
+    # prompt for user input
+    selection = input("Please select an interface to use: ")
+
+    # check input and make sure they selected a valid input
+    if num > len(networkInterfaces):
+        exit("Incorrect value inputted. Exiting")
 
     # Retrieve network addresses (IP, broadcast) from the network interfaces
-    addrs = netifaces.ifaddresses(interface)
+    addrs = netifaces.ifaddresses(networkInterfaces[num])
     try:
-        local_ip = addrs[netifaces.AF_INET][0]["addr"]
+        ipaddr = addrs[netifaces.AF_INET][0]["addr"]
         broadcast = addrs[netifaces.AF_INET][0]["broadcast"]
     except KeyError:
-        exit("Cannot read address/broadcast address on interface {}".format(interface))
+        exit("Cannot read address/broadcast address on interface {}".format(networkInterfaces[num]))
 
-def macNotification(title, subtitle, content):
-    # init OS X notification center
-    notification_center = AppKit.NSUserNotificationCenter.defaultUserNotificationCenter()
-
-    # create a new notification and set title, subtitle and content
-    notification = AppKit.NSUserNotification.alloc().init()
-    notification.setTitle_(title)
-    notification.setSubtitle_(subtitle)
-    notification.setInformativeText_(content)
-
-    # display to user
-    notification_center.deliverNotification_(notification)
-
+    logging.info("ARPSpoofing Detection started on {}".format(ipaddr))
 
 def main():
-
+    # retrieve system OS
     system_os = platform.system()
 
     # Determine system OS and execute appropriate function
-    if system_os == 'Darwin': # Mac
-        MacSpoofScanner()
-    elif system_os == 'Windows': # Windows
-        getAccountPrivilegesWindows()
+    if system_os == 'Windows': # Windows
+        print("Info will be stored in a log titled \"Windows ARP log.txt\"")
+        WindowsSpoofScanner()
     else:
         print("Operating System not supported")
-
-    # retrieve log name from user
-    # log_name = input("Enter a name for the log file: ")
-
-    # if no user input then file will be called ARP log.txt
-    # if log_name == "":
-    print("Info will be stored in a log titled \"ARP log.txt\"")
-    #    log_name = "ARP log.txt"
-
 
 
 if __name__ == '__main__':
