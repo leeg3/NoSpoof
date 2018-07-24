@@ -6,7 +6,7 @@ Date: 7/17/18
 Description: This script is designed to look for ARPSpoofing which is a key step in order to execute a Man in the Middle Attack. If an attack is detected, then a notification is sent to the user.
 
 execute instructions:
-sudo python3 detectARPSpoof.py
+sudo python3 Mac-detectARPSpoof.py
 
 """
 
@@ -37,15 +37,17 @@ def MacSpoofScanner():
     formatLog()
 
     # do scanner things
+
+    macNotification("Spoof Notification", "Your networked is under attacked", "Detected from [MAC Address]")
+
+    
     sniff(filter = "arp", prn = packet_filter, store = 0)
 
-    # if spoof detected, then issue a notification
-    macNotification()
+    
 
-
-def check_spoof (source, mac, destination):
-    # Function checks if a specific ARP reply is part of an ARP spoof attack or not
-    if destination == broadcast:
+"""
+def spoofChecker (source, mac, destintion):
+    if destination == broastcast:
         if not mac in replies_count:
             replies_count[mac] = 0
 
@@ -54,15 +56,55 @@ def check_spoof (source, mac, destination):
             replies_count[mac] = 0
         else:
             replies_count[mac] += 1
-        # Logs ARP Reply
-        logging.warning("ARP replies detected from MAC {}. Request count {}".format(mac, replies_count[mac]))
 
+        logging.warning("Request count {}".format(mac, replies_count[mac]))
+
+        # Check whether or not number of replies reach a threshold and check for whether ir not the notification is already displayed
         if (replies_count[mac] > request_threshold) and (not mac in notification_issued):
-            # Check number of replies reaches threshold or not, and whether or not we have sent a notification for this MAC addr
-            logging.error("ARP Spoofing Detected from MAC Address {}".format(mac)) # Logs the attack in the log file
-            # Issue OS Notification
-            macNotification("ARP Spoofing Detected", "The current network is being attacked.", "ARP Spoofing Attack Detected from {}.".format(mac))
-            # Add to sent list to prevent repeated notifications.
+            # Log the attack to the log file
+            logging.error("ARPSpoof Detected from MAC Address {}".format(mac))
+
+            # if spoof detected, then issue a notification
+            macNotification("Spoof Notification", "Your networked is under attacked", "Detected from {}.".format(mac))
+
+            # Add to notification_issued list so that the notification won't be repeated.
+            notification_issued.append(mac)
+        else:
+            if source in requests: 
+                requests.remove(source)
+"""
+
+
+    
+def getAccountPrivilegesWindows():
+    if ctypes.windll.shell32.IsUserAnAdmin() != 0:
+        exit("Admin permission is needed to manage network interfaces. Aborting.")
+    else:
+        print("Current user has necessary permisisons.")
+
+    formatLog()
+def spoofChecker (source, mac, destintion):
+    if destination == broastcast:
+        if not mac in replies_count:
+            replies_count[mac] = 0
+
+    if not source in requests and source != local_ip:
+        if not mac in replies_count:
+            replies_count[mac] = 0
+        else:
+            replies_count[mac] += 1
+
+        logging.warning("Request count {}".format(mac, replies_count[mac]))
+
+        # Check whether or not number of replies reach a threshold and check for whether ir not the notification is already displayed
+        if (replies_count[mac] > request_threshold) and (not mac in notification_issued):
+            # Log the attack to the log file
+            logging.error("ARPSpoof Detected from MAC Address {}".format(mac))
+
+            # if spoof detected, then issue a notification
+            macNotification("Spoof Notification", "Your networked is under attacked", "Detected from {}.".format(mac))
+
+            # Add to notification_issued list so that the notification won't be repeated.
             notification_issued.append(mac)
     else:
         if source in requests:
