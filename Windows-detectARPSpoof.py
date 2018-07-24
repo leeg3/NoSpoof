@@ -8,7 +8,7 @@ Description: This script is designed to analyze internet traffic for ARPSpoofing
 Requirements:
 1. python3
 2. winpcap
-3. netifaces, ctypes, win10toast, scapy python packages
+3. netifaces, win10toast, scapy python modules
 4. admin account
 5. admin powershell
 
@@ -20,13 +20,14 @@ Notes:
 How do i make windows network interfaces more readable?
 """
 
-import os, time, netifaces, sys, logging, ctypes, platform
+import os, time, netifaces, sys, logging, ctypes, platform, subprocess
 from win10toast import ToastNotifier
 from scapy.all import sniff
 
 requests = []
 replies_count = {}
 sent_notifications = []
+required_modules = ["netifaces", "win10toast", "scapy"]
 
 # strings to store assigned ip address and broadcast IP address
 ip_addr = ""
@@ -63,7 +64,7 @@ def check_spoof (source, mac, destination):
             replies_count[mac] += 1
 
         # Logs ARP Reply
-        logging.warning("ARP replies detected from MAC {}. Request count {}".format(mac, replies_count[mac]))
+        logging.warning("ARPSpoofing replies detected from {}. Request count #{}".format(mac, replies_count[mac]))
 
         if (replies_count[mac] > request_limit) and (not mac in notification_issued):
             # Check number of replies reaches threshold or not, and whether or not we have sent a notification for this MAC addr
@@ -89,7 +90,7 @@ def formatLog():
     # import connected network interfaces into a list
     networkInterfaces = netifaces.interfaces()
 
-    # output all network interfaces
+    # output all network interfaces and their corresponding index
     num = 0
     print("Available network interfaces")
     for elem in networkInterfaces:
@@ -100,7 +101,7 @@ def formatLog():
     selection = int(input("Please select an interface to use: "))
 
     # check input and make sure they selected a valid input
-    if selection > len(networkInterfaces):
+    if selection > len(networkInterfaces) or selection < 0:
         exit("Incorrect value inputted. Exiting")
 
     # Retrieve network addresses (IP, broadcast) from the network interfaces
@@ -119,6 +120,14 @@ def main():
 
     # Determine system OS and execute appropriate function
     if system_os == 'Windows': # Windows
+        # retrieve installed python modules
+        installed_modules = subprocess.check_output("pip freeze")
+
+        # check for required modules, exit if any one of them are missing
+        for elem in required_modules:
+            if elem not in str(installed_modules):
+                exit("Missing python modules. Please check to ensure that the required modules are installed.")
+
         print("Info will be stored in a log titled \"Windows ARP log.txt\"")
 
         # determine if the user has Admin permission. If not then exit
