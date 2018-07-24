@@ -3,16 +3,21 @@
 """
 Authors: Greg Lee, An Nguyen
 Date: 7/17/18
-Description: This script is designed to look for ARPSpoofing which is a key step in order to execute a Man in the Middle Attack. If an attack is detected, then a notification is sent to the user.
-
-execute instructions:
-sudo python3 detectARPSpoof.py
+Description: This script is designed to analyze internet traffic for ARPSpoofing which is a key step in order to execute a Man in the Middle Attack. If an attack is detected, then a notification is sent to the user.
 
 Requirements:
-1. netifaces, ctypes, win10toast, scapy python packages
-2. admin account
-3. admin powershell
+1. python3
+2. winpcap
+3. netifaces, ctypes, win10toast, scapy python packages
+4. admin account
+5. admin powershell
 
+execute instructions:
+(in admin powershell with admin account)
+python3 detectARPSpoof.py
+
+Notes:
+How do i make windows network interfaces more readable?
 """
 
 import os, time, netifaces, sys, logging, ctypes, platform
@@ -21,13 +26,14 @@ from scapy.all import sniff
 
 requests = []
 replies_count = {}
-notification_issued = []
+sent_notifications = []
 
+# strings to store assigned ip address and broadcast IP address
 ip_addr = ""
 broadcast_addr = ""
 
-# Number of ARP replies received from a specific mac before flagging it
-request_limit = 10
+# Number of ARP replies received from a specific mac address before marking as ARP spoof
+request_limit = 7
 
 
 def packet_filter (packet):
@@ -65,7 +71,7 @@ def check_spoof (source, mac, destination):
             # Issue OS Notification
             sendNotification(mac)
             # Add to sent list to prevent repeated notifications.
-            notification_issued.append(mac)
+            sent_notifications.append(mac)
     else:
         if source in requests:
             requests.remove(source)
@@ -78,7 +84,7 @@ def sendNotification():
 
 def formatLog():
     # define logging format
-    logging.basicConfig(format='%(asctime)s: %(message)s', filename="Windows ARP log.txt")
+    logging.basicConfig(format='%(asctime)s: %(message)s', filename="ARP log - Windows.txt")
 
     # import connected network interfaces into a list
     networkInterfaces = netifaces.interfaces()
