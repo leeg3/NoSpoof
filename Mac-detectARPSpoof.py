@@ -31,10 +31,11 @@ def MacSpoofScanner():
 
     # do scanner things
 
+    macNotification("Spoof Notification", "Your networked is under attacked", "Detected from [MAC Address]")
 
     
 
-
+"""
 def spoofChecker (source, mac, destintion):
     if destination == broastcast:
         if not mac in replies_count:
@@ -61,7 +62,7 @@ def spoofChecker (source, mac, destintion):
         else:
             if source in requests: 
                 requests.remove(source)
-
+"""
 
     
 def getAccountPrivilegesWindows():
