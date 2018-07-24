@@ -3,43 +3,56 @@
 """
 Authors: Greg Lee, An Nguyen
 Date: 7/17/18
-Description: This script is designed to look for ARPSpoofing which is a key step in order to execute a Man in the Middle Attack. If an attack is detected, then a notification is sent to the user.
+Description: This script is designed to analyze internet traffic for ARPSpoofing which is a key step in order to execute a Man in the Middle Attack. If an attack is detected, then a notification is sent to the user.
+
+Requirements:
+1. python3
+2. winpcap
+3. netifaces, ctypes, win10toast, scapy python packages
+4. admin account
+5. admin powershell
 
 execute instructions:
-sudo python3 detectARPSpoof.py
+(in admin powershell with admin account)
+python3 detectARPSpoof.py
 
+Notes:
+How do i make windows network interfaces more readable?
 """
 
 import os, time, netifaces, sys, logging, ctypes, platform
 from win10toast import ToastNotifier
 from scapy.all import sniff
 
-ipaddr = ""
-broadcast = ""
 requests = []
 replies_count = {}
-notification_issued = []
+sent_notifications = []
+
+# strings to store assigned ip address and broadcast IP address
+ip_addr = ""
+broadcast_addr = ""
+
+# Number of ARP replies received from a specific mac address before marking as ARP spoof
+request_limit = 7
 
 
-def WindowsSpoofScanner():
-    # determine if the user has Admin permission. If not then exit
-    if ctypes.windll.shell32.IsUserAnAdmin() != 0:
-        exit("Admin permission is needed to manage network interfaces. Aborting.")
-    else:
-        print("Current user has necessary permisisons.")
+def packet_filter (packet):
+    # Retrieve info from packet
+    source = packet.sprintf("%ARP.psrc%")
+    destination = packet.sprintf("%ARP.pdst%")
+    source_mac = packet.sprintf("%ARP.hwsrc%")
+    op = packet.sprintf("%ARP.op%")
 
-    # format log
-    formatLog()
-
-    print("ARP Spoofing Detection Started. Any output is redirected to log file.")
-
-    # sniff is used to sniff the packets and send them to the packet_filter
-    sniff(filter = "arp", prn = packet_filter, store = 0)
+    # if packet is from this computer, then save its destination into requests
+    if source == ip_addr:
+        requests.append(destination)
+    if op == 'is-at':
+        return check_spoof (source, source_mac, destination)
 
 
 def check_spoof (source, mac, destination):
     # Function checks if a specific ARP reply is part of an ARP spoof attack or not
-    if destination == broadcast:
+    if destination == broadcast_addr:
         if not mac in replies_count:
             replies_count[mac] = 0
 
@@ -52,32 +65,16 @@ def check_spoof (source, mac, destination):
         # Logs ARP Reply
         logging.warning("ARP replies detected from MAC {}. Request count {}".format(mac, replies_count[mac]))
 
-        if (replies_count[mac] > request_threshold) and (not mac in notification_issued):
+        if (replies_count[mac] > request_limit) and (not mac in notification_issued):
             # Check number of replies reaches threshold or not, and whether or not we have sent a notification for this MAC addr
             logging.error("ARP Spoofing Detected from MAC Address {}".format(mac)) # Logs the attack in the log file
             # Issue OS Notification
-            #issue_os_notification("ARP Spoofing Detected", "The current network is being attacked.", "ARP Spoofing Attack Detected from {}.".format(mac))
             sendNotification(mac)
             # Add to sent list to prevent repeated notifications.
-            notification_issued.append(mac)
+            sent_notifications.append(mac)
     else:
         if source in requests:
             requests.remove(source)
-
-
-def packet_filter (packet):
-    # Retrieve necessary parameters from packet
-    source = packet.sprintf("%ARP.psrc%")
-    destination = packet.sprintf("%ARP.pdst%")
-    source_mac = packet.sprintf("%ARP.hwsrc%")
-    op = packet.sprintf("%ARP.op%")
-
-    # send packets to be checked for spoofing
-    if source == ipaddr:
-        requests.append(destination)
-    if op == 'is-at':
-        return check_spoof (source, source_mac, destination)
-
 
 
 def sendNotification():
@@ -87,7 +84,7 @@ def sendNotification():
 
 def formatLog():
     # define logging format
-    logging.basicConfig(format='%(asctime)s: %(message)s', filename="Windows ARP log.txt")
+    logging.basicConfig(format='%(asctime)s: %(message)s', filename="ARP log - Windows.txt")
 
     # import connected network interfaces into a list
     networkInterfaces = netifaces.interfaces()
@@ -99,36 +96,44 @@ def formatLog():
         print("[{}]: {}".format(num, networkInterfaces[num]))
         num+=1
 
-    # decrement num by 1
-    num-=1
-
     # prompt for user input
-    selection = input("Please select an interface to use: ")
+    selection = int(input("Please select an interface to use: "))
 
     # check input and make sure they selected a valid input
-    if num > len(networkInterfaces):
+    if selection > len(networkInterfaces):
         exit("Incorrect value inputted. Exiting")
 
     # Retrieve network addresses (IP, broadcast) from the network interfaces
-    addrs = netifaces.ifaddresses(networkInterfaces[num])
+    addrs = netifaces.ifaddresses(networkInterfaces[selection])
     try:
-        ipaddr = addrs[netifaces.AF_INET][0]["addr"]
-        broadcast = addrs[netifaces.AF_INET][0]["broadcast"]
+        ip_addr = addrs[netifaces.AF_INET][0]["addr"]
+        broadcast_addr = addrs[netifaces.AF_INET][0]["broadcast"]
+        print("Your IP address: ", ip_addr)
+        print("Your broadcast IP address: ", broadcast_addr)
     except KeyError:
-        exit("Cannot read address/broadcast address on interface {}".format(networkInterfaces[num]))
+        exit("Cannot read address/broadcast address on interface {}".format(networkInterfaces[int(selection)]))
 
-    logging.info("ARPSpoofing Detection started on {}".format(ipaddr))
 
 def main():
-    # retrieve system OS
-    system_os = platform.system()
+    system_os = platform.system() # retrieve system OS
 
     # Determine system OS and execute appropriate function
     if system_os == 'Windows': # Windows
         print("Info will be stored in a log titled \"Windows ARP log.txt\"")
-        WindowsSpoofScanner()
+
+        # determine if the user has Admin permission. If not then exit
+        if ctypes.windll.shell32.IsUserAnAdmin() == 0:
+            exit("Admin permission is needed to manage network interfaces. Aborting.")
+        else:
+            print("Current user has necessary permisisons.")
+
+        formatLog() # format log
+        print("ARP Spoofing Detection Started. Any output is redirected to log file.")
+
+        # use sniff tool to sniff the packets and send them to the packet_filter
+        sniff(filter = "arp", prn = packet_filter, store = 0)
     else:
-        print("Operating System not supported")
+        print("Operating System not supported. Please ensure that you have the correct script for your operating system.")
 
 
 if __name__ == '__main__':
