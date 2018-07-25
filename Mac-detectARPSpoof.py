@@ -5,12 +5,17 @@ Authors: Greg Lee, An Nguyen
 Date: 7/17/18
 Description: This script is designed to look for ARPSpoofing which is a key step in order to execute a Man in the Middle Attack. If an attack is detected, then a notification is sent to the user.
 
+Requirements:
+1. python3
+2. winpcap
+3. netifaces, AppKit, scapy python modules
+
 execute instructions:
 sudo python3 Mac-detectARPSpoof.py
 
 """
 
-import os, time, netifaces, sys, logging, ctypes #, AppKit
+import os, time, netifaces, sys, logging, subprocess, ctypes #, AppKit
 # import os, time, sys, logging
 import platform
 from scapy.all import sniff
@@ -18,9 +23,13 @@ from scapy.all import sniff
 requests = []
 replies_count = {}
 notification_issued = []
+required_modules = ["netifaces", "scapy"] #, "AppKit"]
 
 ipaddr = ""
 broadcast = ""
+
+request_threshold = 7
+
 
 def MacSpoofScanner():
     # determine if user has root permissions
@@ -29,10 +38,8 @@ def MacSpoofScanner():
     else:
         print("Current user has necessary permissions.")
 
-    print("Info will be stored in a log titled \"Mac ARP log.txt\"")
+    print("Info will be stored in a log titled \"ARP log - Mac.txt\"")
 
-    macNotification("TEST", "TEST", "THIS IS A TESET")
-    
     # format log
     formatLog()
 
@@ -40,10 +47,10 @@ def MacSpoofScanner():
 
     macNotification("Spoof Notification", "Your networked is under attacked", "Detected from [MAC Address]")
 
-    
+
     sniff(filter = "arp", prn = packet_filter, store = 0)
 
-    
+
 
 """
 def spoofChecker (source, mac, destintion):
@@ -70,25 +77,17 @@ def spoofChecker (source, mac, destintion):
             # Add to notification_issued list so that the notification won't be repeated.
             notification_issued.append(mac)
         else:
-            if source in requests: 
+            if source in requests:
                 requests.remove(source)
 """
 
 
-    
-def getAccountPrivilegesWindows():
-    if ctypes.windll.shell32.IsUserAnAdmin() != 0:
-        exit("Admin permission is needed to manage network interfaces. Aborting.")
-    else:
-        print("Current user has necessary permisisons.")
-
-    formatLog()
-def spoofChecker (source, mac, destintion):
-    if destination == broastcast:
+def spoofChecker (source, mac, destination):
+    if destination == broadcast:
         if not mac in replies_count:
             replies_count[mac] = 0
 
-    if not source in requests and source != local_ip:
+    if not source in requests and source != ipaddr:
         if not mac in replies_count:
             replies_count[mac] = 0
         else:
@@ -120,7 +119,7 @@ def packet_filter (packet):
     if source == ipaddr:
         requests.append(destination)
     if op == 'is-at':
-        return check_spoof (source, source_mac, destination)
+        return spoofChecker(source, source_mac, destination)
 
 
 def formatLog():
@@ -147,6 +146,8 @@ def formatLog():
 
 def macNotification(title, subtitle, content):
     # init OS X notification center
+    import AppKit
+
     notification_center = AppKit.NSUserNotificationCenter.defaultUserNotificationCenter()
 
     # create a new notification and set title, subtitle and content
@@ -160,16 +161,23 @@ def macNotification(title, subtitle, content):
 
 
 def main():
-
+    # get system OS
     system_os = platform.system()
 
     # Determine system OS and execute appropriate function
     if system_os == 'Darwin': # Mac
+        # retrieve installed python modules
+        #installed_modules = subprocess.check_output("pip freeze")
+
+        #for elem in required_modules:
+        #    if elem not in str(installed_modules):
+        #        exit("Missing python modules. Please check to ensure that the required modules are installed.")
+
+        # move permission checker here
+
         MacSpoofScanner()
-    elif system_os == 'Windows': # Windows
-        getAccountPrivilegesWindows()
     else:
-        print("Operating System not supported")
+        print("Operating System not supported. Please ensure that you have the correct script for your operating system.")
 
 
 
