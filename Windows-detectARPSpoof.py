@@ -97,7 +97,7 @@ def sortPackets(packet):
 
 # checks if a packet is part of an ARP spoof attack
 def checkARPspoof(source, mac_addr, destination):
-    # if the mac address is not in the list and destination of the received packet is the same as the broadcast address then add into list 
+    # if the mac address is not in the list and destination of the received packet is the same as the broadcast address then add into list
     if mac_addr not in numOfReplies and broadcast_addr == destination:
         numOfReplies[mac_addr] = 0
 
