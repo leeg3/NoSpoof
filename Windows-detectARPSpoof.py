@@ -20,7 +20,7 @@ Notes:
 How do i make windows network interfaces more readable?
 """
 
-import os, time, netifaces, sys, logging, ctypes, platform, subprocess
+import os, sys, time, logging, ctypes, platform, subprocess, netifaces
 from win10toast import ToastNotifier
 from scapy.all import sniff
 
@@ -28,7 +28,7 @@ from scapy.all import sniff
 connection_request = []
 # store the number of replies per address
 numOfReplies = {}
-# determine if a notification for an IP has been sent already
+# store sent notifications to prevent repeat notifications for the same mac address
 sent_notifications = []
 # list required modules in order for script to run
 required_modules = ["netifaces", "win10toast", "scapy"]
@@ -43,15 +43,19 @@ request_limit = 7
 
 # function to create and format the log
 def formatLog():
-    # define logging format
-    logging.basicConfig(format='%(asctime)s: %(message)s', filename="ARP log - Windows.txt")
+    # define logging format and log name
+    FORMAT = '%(asctime)s: %(message)s'
+    LOG_NAME = "ARP log - Windows.txt"
+
+    # create log with format defined above
+    logging.basicConfig(format=FORMAT, filename=LOG_NAME)
 
     # import connected network interfaces into a list
     networkInterfaces = netifaces.interfaces()
 
     # output all network interfaces and their corresponding index
     num = 0
-    print("Available network interfaces")
+    print("Connected Network Interfaces:")
     for elem in networkInterfaces:
         print("[{}]: {}".format(num, networkInterfaces[num]))
         num+=1
@@ -75,60 +79,60 @@ def formatLog():
 
 
 # filters the packets sent to it
-def packet_filter (packet):
-    # Retrieve info from packet
-    source = packet.sprintf("%ARP.psrc%")
-    destination = packet.sprintf("%ARP.pdst%")
-    source_mac = packet.sprintf("%ARP.hwsrc%")
-    op = packet.sprintf("%ARP.op%")
+def sortPackets(packet):
+    # Retrieve source, destination, hardware source and operation from packet
+    packet_src = packet.sprintf("%ARP.psrc%")   # packet source
+    packet_dest = packet.sprintf("%ARP.pdst%")  # packet destination
+    source_mac = packet.sprintf("%ARP.hwsrc%")  # hardware source
+    packet_op = packet.sprintf("%ARP.op%")      # packet operation
 
     # if packet is from this computer, then save its destination into connection_request
-    if source == ip_addr:
-        connection_request.append(destination)
+    if packet_src == ip_addr:
+        connection_request.append(packet_dest)
 
     # if the operation is in "is-at" check for spoof
-    if op == 'is-at':
-        return check_spoof (source, source_mac, destination)
+    if packet_op == 'is-at':
+        return checkARPspoof(packet_src, source_mac, packet_dest)
 
 
-# Function checks if a specific ARP reply is part of an ARP spoof attack or not
-def check_spoof (source, mac, destination):
-    # if the destination of the received packet is the same as the broadcast address, add into numOfReplies if not added already
-    if destination == broadcast_addr:
-        if not mac in numOfReplies:
-            numOfReplies[mac] = 0
+# checks if a packet is part of an ARP spoof attack
+def checkARPspoof(source, mac_addr, destination):
+    # if the mac address is not in the list and destination of the received packet is the same as the broadcast address then add into list 
+    if mac_addr not in numOfReplies and broadcast_addr == destination:
+        numOfReplies[mac_addr] = 0
 
-    # if the source IP is found in the connection request and it is not he local_ip, then increment otherwise reset to 0
-    if not source in connection_request and source != local_ip:
-        if not mac in numOfReplies:
-            numOfReplies[mac] = 0
+    # if the source IP is found in the connection request and it is not the ip_addr, then increment otherwise reset to 0
+    if source not in connection_request and source != ip_addr:
+        if mac_addr in numOfReplies:
+            numOfReplies[mac_addr] += 1
         else:
-            numOfReplies[mac] += 1
+            numOfReplies[mac_addr] = 0
 
-        # add entry into log about an ARPSpoofing attempt
-        logging.warning("ARPSpoofing replies detected from {}. Request count #{}".format(mac, numOfReplies[mac]))
+        # add a warning entry into log about an ARPSpoofing attempt
+        logging.warning("ARP reply from {}, Request count #{}".format(mac_addr, numOfReplies[mac]))
 
-        # if the number of replies from a single source is more than the limit, and a notification has not been sent, add an entry into the log and send notification, then add to sent_notifications list
-        if (numOfReplies[mac] > request_limit) and (not mac in notification_issued):
-            logging.error("ARP Spoofing Detected from MAC Address {}".format(mac))
-            sendNotification(mac)
-            sent_notifications.append(mac)
+        # If the number of replies from a single source is more than the limit, add an entry into the log. Send notification if one has not been sent already, then add to sent_notifications list
+        if numOfReplies[mac_addr] > request_limit:
+            logging.error("Detected ARPSpoofing from {}".format(mac_addr))
+            if mac not in notification_issued:
+                sendNotification(mac_addr)
+                sent_notifications.append(mac_addr)
     else:
         if source in connection_request:
             connection_request.remove(source)
 
 
-# display a notification to the user about an ARPSpoofing attempt
+# display a notification to the user about an ARPSpoofing attack
 def sendNotification(mac):
     toaster = ToastNotifier()
-    toaster.show_toast("ARPSpoofing Detected", "ARPSpoofing attack detected from {}.".format(mac))
+    toaster.show_toast("Warning: ARPSpoof Detected", "Attack detected from {}.".format(mac))
 
 
 def main():
     # retrieve system OS
     system_os = platform.system()
 
-    # Determine system OS and execute appropriate function
+    # Determine if system OS is compatible with this script
     if system_os == 'Windows': # Windows
         # retrieve installed python modules
         installed_modules = subprocess.check_output("pip freeze")
@@ -140,18 +144,20 @@ def main():
 
         # determine if the user has Admin permission. If not then exit
         if ctypes.windll.shell32.IsUserAnAdmin() == 0:
-            exit("Admin permission is needed to manage network interfaces. Please use an admin account and Admin Powershell to execute.")
+            exit("Admin permission is needed to manage network interfaces. Please use an admin account and Admin Command Prompt/Powershell to execute.")
         else:
             print("Current user has necessary permisisons.")
 
-        print("Info will be stored in a log titled \"ARP log - Windows.txt\"")
+        print("Output will be stored in a log named \"ARP log - Windows.txt\"")
 
         # format log
         formatLog()
-        print("ARP Spoofing Detection Started. Any output is redirected to log file.")
 
-        # use sniff tool to sniff the packets and send them to the packet_filter
-        sniff(filter = "arp", prn = packet_filter, store = 0)
+        print("Starting ARPSpoofing detector. If an ARPSpoof attack is detected, you will be notified.")
+
+        # use sniff to sniff for ARP packets and send them to sortPackets to be filtered. Do not store any packets
+        # change from arp to ether proto arp here. should work
+        sniff(filter = "ether proto arp", prn = sortPackets, store = 0)
     else:
         print("Operating System not supported. Please ensure that you have the correct script for your operating system.")
 
