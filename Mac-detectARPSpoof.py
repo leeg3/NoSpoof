@@ -13,6 +13,10 @@ Requirements:
 execute instructions:
 sudo python3 Mac-detectARPSpoof.py
 
+
+NOTE:
+
+change error to alert if possible for log entry 
 """
 
 import os, time, netifaces, sys, logging, subprocess, ctypes #, AppKit
