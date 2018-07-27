@@ -1,1 +1,82 @@
 2018-07-24 21:12:36,616: Could not compile filter expression ether proto arp
+2018-07-24 21:27:56,857: Could not compile filter expression ether proto arp
+2018-07-25 13:15:30,527: Could not compile filter expression ether proto arp
+2018-07-25 13:16:20,394: Could not compile filter expression ether proto arp
+2018-07-25 13:16:21,296: ARP reply from b4:75:0e:a5:7d:45, Request count #0
+2018-07-25 13:17:06,289: ARP reply from b4:75:0e:a5:7d:45, Request count #1
+2018-07-25 13:18:07,812: ARP reply from b4:75:0e:a5:7d:45, Request count #2
+2018-07-25 13:18:25,272: ARP reply from ec:08:6b:6a:01:4a, Request count #0
+2018-07-25 13:18:55,327: ARP reply from b4:75:0e:a5:7d:45, Request count #3
+2018-07-25 13:20:06,300: ARP reply from b4:75:0e:a5:7d:45, Request count #4
+2018-07-25 13:20:22,764: ARP reply from ec:08:6b:6a:01:4a, Request count #1
+2018-07-25 13:23:43,266: ARP reply from b4:75:0e:a5:7d:45, Request count #5
+2018-07-25 13:24:27,919: ARP reply from ec:08:6b:6a:01:4a, Request count #2
+2018-07-25 13:24:31,832: ARP reply from b4:75:0e:a5:7d:45, Request count #6
+2018-07-25 13:25:42,616: ARP reply from ec:08:6b:6a:01:4a, Request count #3
+2018-07-25 13:25:47,340: ARP reply from 98:01:a7:a9:bb:53, Request count #0
+2018-07-25 13:26:48,812: ARP reply from b4:75:0e:a5:7d:45, Request count #7
+2018-07-25 13:27:03,174: ARP reply from ec:08:6b:6a:01:4a, Request count #4
+2018-07-25 13:33:35,707: ARP reply from ec:08:6b:6a:01:4a, Request count #5
+2018-07-25 13:35:00,380: ARP reply from 98:01:a7:a9:bb:53, Request count #1
+2018-07-25 13:35:03,488: ARP reply from ec:08:6b:6a:01:4a, Request count #6
+2018-07-25 13:35:08,310: ARP reply from b4:75:0e:a5:7d:45, Request count #8
+2018-07-25 13:35:08,310: Detected ARPSpoofing from b4:75:0e:a5:7d:45
+2018-07-25 13:35:47,849: Could not compile filter expression ether proto arp
+2018-07-25 13:36:49,743: ARP reply from b4:75:0e:a5:7d:45, Request count #0
+2018-07-25 13:39:35,014: ARP reply from ec:08:6b:6a:01:4a, Request count #0
+2018-07-25 13:39:35,919: ARP reply from c4:e9:84:18:07:8e, Request count #0
+2018-07-25 13:39:37,925: ARP reply from c4:e9:84:18:07:8e, Request count #1
+2018-07-25 13:39:39,830: ARP reply from c4:e9:84:18:07:8e, Request count #2
+2018-07-25 13:39:39,930: ARP reply from c4:e9:84:18:07:8e, Request count #3
+2018-07-25 13:39:41,935: ARP reply from c4:e9:84:18:07:8e, Request count #4
+2018-07-25 13:39:43,941: ARP reply from c4:e9:84:18:07:8e, Request count #5
+2018-07-25 13:39:45,950: ARP reply from c4:e9:84:18:07:8e, Request count #6
+2018-07-25 13:39:47,955: ARP reply from c4:e9:84:18:07:8e, Request count #7
+2018-07-25 13:39:49,961: ARP reply from c4:e9:84:18:07:8e, Request count #8
+2018-07-25 13:39:49,961: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:41:15,991: Could not compile filter expression ether proto arp
+2018-07-25 13:43:16,085: ARP reply from c4:e9:84:18:07:8e, Request count #0
+2018-07-25 13:43:18,092: ARP reply from c4:e9:84:18:07:8e, Request count #1
+2018-07-25 13:43:20,098: ARP reply from c4:e9:84:18:07:8e, Request count #2
+2018-07-25 13:43:22,104: ARP reply from c4:e9:84:18:07:8e, Request count #3
+2018-07-25 13:43:24,058: ARP reply from c4:e9:84:18:07:8e, Request count #4
+2018-07-25 13:43:26,064: ARP reply from c4:e9:84:18:07:8e, Request count #5
+2018-07-25 13:43:28,070: ARP reply from c4:e9:84:18:07:8e, Request count #6
+2018-07-25 13:43:30,076: ARP reply from c4:e9:84:18:07:8e, Request count #7
+2018-07-25 13:43:32,085: ARP reply from c4:e9:84:18:07:8e, Request count #8
+2018-07-25 13:43:32,085: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:43:37,230: ARP reply from c4:e9:84:18:07:8e, Request count #9
+2018-07-25 13:43:37,230: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:43:37,230: ARP reply from c4:e9:84:18:07:8e, Request count #10
+2018-07-25 13:43:37,230: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:43:38,031: ARP reply from c4:e9:84:18:07:8e, Request count #11
+2018-07-25 13:43:38,031: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:43:40,039: ARP reply from c4:e9:84:18:07:8e, Request count #12
+2018-07-25 13:43:40,039: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:43:42,046: ARP reply from c4:e9:84:18:07:8e, Request count #13
+2018-07-25 13:43:42,046: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:48:40,361: Could not compile filter expression ether proto arp
+2018-07-25 13:48:43,676: ARP reply from ec:08:6b:6a:01:4a, Request count #0
+2018-07-25 13:50:03,216: ARP reply from c4:e9:84:18:07:8e, Request count #0
+2018-07-25 13:50:05,225: ARP reply from c4:e9:84:18:07:8e, Request count #1
+2018-07-25 13:50:07,230: ARP reply from c4:e9:84:18:07:8e, Request count #2
+2018-07-25 13:50:09,236: ARP reply from c4:e9:84:18:07:8e, Request count #3
+2018-07-25 13:50:11,142: ARP reply from c4:e9:84:18:07:8e, Request count #4
+2018-07-25 13:50:13,147: ARP reply from c4:e9:84:18:07:8e, Request count #5
+2018-07-25 13:50:15,152: ARP reply from c4:e9:84:18:07:8e, Request count #6
+2018-07-25 13:50:17,158: ARP reply from c4:e9:84:18:07:8e, Request count #7
+2018-07-25 13:50:19,163: ARP reply from c4:e9:84:18:07:8e, Request count #8
+2018-07-25 13:50:19,163: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:50:24,185: ARP reply from c4:e9:84:18:07:8e, Request count #9
+2018-07-25 13:50:24,185: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:50:24,195: ARP reply from c4:e9:84:18:07:8e, Request count #10
+2018-07-25 13:50:24,195: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:50:25,201: ARP reply from c4:e9:84:18:07:8e, Request count #11
+2018-07-25 13:50:25,201: Detected ARPSpoofing from c4:e9:84:18:07:8e
+2018-07-25 13:50:26,807: ARP reply from 98:01:a7:a9:bb:53, Request count #0
+2018-07-25 13:50:27,811: ARP reply from 98:01:a7:a9:bb:53, Request count #1
+2018-07-25 13:50:28,813: ARP reply from b4:75:0e:a5:7d:45, Request count #0
+2018-07-25 13:50:28,813: ARP reply from 98:01:a7:a9:bb:53, Request count #2
+2018-07-25 13:50:29,817: ARP reply from 98:01:a7:a9:bb:53, Request count #3
+2018-07-25 13:50:30,822: ARP reply from 98:01:a7:a9:bb:53, Request count #4
+2018-07-25 13:50:39,770: ARP reply from ec:08:6b:6a:01:4a, Request count #1
