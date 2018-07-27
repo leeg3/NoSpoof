@@ -108,3 +108,20 @@ WARNING: 07/25/2018 01:43:43 PM Request count ec:08:6b:6a:01:4a
 WARNING: 07/25/2018 01:43:43 PM Request count ec:08:6b:6a:01:4a
 WARNING: 07/25/2018 01:43:44 PM Request count ec:08:6b:6a:01:4a
 WARNING: 07/25/2018 01:43:46 PM Request count ec:08:6b:6a:01:4a
+WARNING: 07/26/2018 11:45:59 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:46:03 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:46:09 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:46:11 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:46:19 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:46:25 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:47:56 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:48:00 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:48:06 PM Request count 98:01:a7:a9:bb:53
+ERROR: 07/26/2018 11:48:06 PM ARPSpoof Detected from MAC Address 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:48:11 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:52:01 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:52:40 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:54:08 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:55:16 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:55:22 PM Request count 98:01:a7:a9:bb:53
+WARNING: 07/26/2018 11:55:57 PM Request count 98:01:a7:a9:bb:53
