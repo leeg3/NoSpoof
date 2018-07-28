@@ -80,3 +80,15 @@
 2018-07-25 13:50:29,817: ARP reply from 98:01:a7:a9:bb:53, Request count #3
 2018-07-25 13:50:30,822: ARP reply from 98:01:a7:a9:bb:53, Request count #4
 2018-07-25 13:50:39,770: ARP reply from ec:08:6b:6a:01:4a, Request count #1
+2018-07-26 23:52:43,121: Could not compile filter expression ether proto arp
+2018-07-26 23:52:55,590: Could not compile filter expression ether proto arp
+2018-07-26 23:53:47,758: Could not compile filter expression ether proto arp
+2018-07-26 23:54:36,773: ARP reply from 4c:cc:6a:2f:78:e9, Request count #0
+2018-07-26 23:56:36,761: ARP reply from 4c:cc:6a:2f:78:e9, Request count #1
+2018-07-26 23:58:36,752: ARP reply from 4c:cc:6a:2f:78:e9, Request count #2
+2018-07-27 00:00:36,766: ARP reply from 4c:cc:6a:2f:78:e9, Request count #3
+2018-07-27 00:02:36,746: ARP reply from 4c:cc:6a:2f:78:e9, Request count #4
+2018-07-27 00:02:56,349: ARP reply from 4c:cc:6a:2f:78:e9, Request count #5
+2018-07-28 15:25:27,569: Could not compile filter expression ether proto arp
+2018-07-28 15:32:21,306: Could not compile filter expression ether proto arp
+2018-07-28 15:32:28,733: Could not compile filter expression ether proto arp
