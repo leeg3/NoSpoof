@@ -17,10 +17,11 @@ execute instructions:
 python3 detectARPSpoof.py
 
 Notes:
-How do i make windows network interfaces more readable?
+try an add a time limit for arp requests, testing shows that aircrack-ng? tries to do the spoof in like 30 seconds
+TEST
 """
 
-import os, sys, time, logging, ctypes, platform, subprocess, netifaces
+import os, sys, time, calendar, logging, ctypes, platform, subprocess, netifaces
 from win10toast import ToastNotifier
 from scapy.all import sniff
 
@@ -28,6 +29,8 @@ from scapy.all import sniff
 connection_request = []
 # store the number of replies per address
 numOfReplies = {}
+# store time at which first ARP request occured
+timeAtRequest = {}
 # store sent notifications to prevent repeat notifications for the same mac address
 sent_notifications = []
 # list required modules in order for script to run
@@ -39,6 +42,9 @@ broadcast_addr = ""
 
 # Number of ARP replies received from a specific mac address before marking as ARP spoof
 request_limit = 7
+
+# number of seconds an arpspoof is executed in. This is reflected in testing
+request_time_limit = 60
 
 
 # function to create and format the log
@@ -75,7 +81,7 @@ def formatLog():
         print("Your IP address: ", ip_addr)
         print("Your broadcast IP address: ", broadcast_addr)
     except KeyError:
-        exit("Cannot read address/broadcast address on interface {}".format(networkInterfaces[int(selection)]))
+        exit("Cannot read address/broadcast address on interface {}".format(networkInterfaces[selection]))
 
 
 # filters the packets sent to it
@@ -100,23 +106,27 @@ def checkARPspoof(source, mac_addr, destination):
     # if the mac address is not in the list and destination of the received packet is the same as the broadcast address then add into list
     if mac_addr not in numOfReplies and broadcast_addr == destination:
         numOfReplies[mac_addr] = 0
+        timeAtRequest[mac_addr] = calendar.timegm(time.gmtime())
 
-    # if the source IP is found in the connection request and it is not the ip_addr, then increment otherwise reset to 0
+    # if the source IP is found in the connection request and it is not the ip_addr, then increment otherwise reset to 0 and reset time
     if source not in connection_request and source != ip_addr:
         if mac_addr in numOfReplies:
             numOfReplies[mac_addr] += 1
         else:
             numOfReplies[mac_addr] = 0
+            timeAtRequest[mac_addr] = calendar.timegm(time.gmtime())
 
         # add a warning entry into log about an ARPSpoofing attempt
-        logging.warning("ARP reply from {}, Request count #{}".format(mac_addr, numOfReplies[mac]))
+        logging.warning("ARP reply from {}, Request count #{}".format(mac_addr, numOfReplies[mac_addr]))
 
-        # If the number of replies from a single source is more than the limit, add an entry into the log. Send notification if one has not been sent already, then add to sent_notifications list
-        if numOfReplies[mac_addr] > request_limit:
+        # If the number of replies from a single source is more than the limit, add an entry into the log. Send notification if one has not been sent already, then add to sent_notifications list and disableWifi on machine
+        timeDiff = calendar.timegm(time.gmtime()) - timeAtRequest[mac_addr]
+        if numOfReplies[mac_addr] > request_limit and timeDiff < request_time_limit:
             logging.error("Detected ARPSpoofing from {}".format(mac_addr))
-            if mac not in notification_issued:
+            if mac_addr not in sent_notifications:
                 sendNotification(mac_addr)
                 sent_notifications.append(mac_addr)
+                disableWifi()
     else:
         if source in connection_request:
             connection_request.remove(source)
@@ -125,7 +135,13 @@ def checkARPspoof(source, mac_addr, destination):
 # display a notification to the user about an ARPSpoofing attack
 def sendNotification(mac):
     toaster = ToastNotifier()
-    toaster.show_toast("Warning: ARPSpoof Detected", "Attack detected from {}.".format(mac))
+    toaster.show_toast("Warning: ARPSpoof Detected", "Attack detected from {}.".format(mac), duration=10)
+
+
+# disable wifi on system
+def disableWifi():
+    subprocess.call("powershell Disable-NetAdapter -Name \"Wi-Fi\" -Confirm:$false")
+    print("ARPSpoof detected, disabled Wi-Fi")
 
 
 def main():

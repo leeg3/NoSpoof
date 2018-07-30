@@ -13,17 +13,20 @@ Requirements:
 execute instructions:
 sudo python3 Mac-detectARPSpoof.py
 
+
+NOTE:
+
+change error to alert if possible for log entry 
 """
 
 import os, time, netifaces, sys, logging, subprocess, ctypes #, AppKit
-# import os, time, sys, logging
 import platform
 from scapy.all import sniff
 
 requests = []
 replies_count = {}
 notification_issued = []
-required_modules = ["netifaces", "scapy"] #, "AppKit"]
+required_modules = ["netifaces", "scapy", "AppKit"]
 
 ipaddr = ""
 broadcast = ""
@@ -124,7 +127,7 @@ def packet_filter (packet):
 
 def formatLog():
     # define logging format
-    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename="ARP log.txt", filemode="a", level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename="ARP log - Mac.txt", filemode="a", level=logging.DEBUG)
 
     # import available network interfaces
     available_interfaces = netifaces.interfaces()
