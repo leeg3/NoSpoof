@@ -17,8 +17,8 @@ execute instructions:
 python3 detectARPSpoof.py
 
 Notes:
-add disable wifi when spoof detected
 try an add a time limit for arp requests, testing shows that aircrack-ng? tries to do the spoof in like 30 seconds
+TEST
 """
 
 import os, sys, time, calendar, logging, ctypes, platform, subprocess, netifaces
@@ -108,7 +108,7 @@ def checkARPspoof(source, mac_addr, destination):
         numOfReplies[mac_addr] = 0
         timeAtRequest[mac_addr] = calendar.timegm(time.gmtime())
 
-    # if the source IP is found in the connection request and it is not the ip_addr, then increment otherwise reset to 0
+    # if the source IP is found in the connection request and it is not the ip_addr, then increment otherwise reset to 0 and reset time
     if source not in connection_request and source != ip_addr:
         if mac_addr in numOfReplies:
             numOfReplies[mac_addr] += 1
@@ -135,7 +135,7 @@ def checkARPspoof(source, mac_addr, destination):
 # display a notification to the user about an ARPSpoofing attack
 def sendNotification(mac):
     toaster = ToastNotifier()
-    toaster.show_toast("Warning: ARPSpoof Detected", "Attack detected from {}.".format(mac))
+    toaster.show_toast("Warning: ARPSpoof Detected", "Attack detected from {}.".format(mac), duration=10)
 
 
 # disable wifi on system
