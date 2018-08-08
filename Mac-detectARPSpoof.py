@@ -12,28 +12,26 @@ Requirements:
 
 execute instructions:
 sudo python3 Mac-detectARPSpoof.py
-
-
-NOTE:
-
-change error to alert if possible for log entry
 """
+
 # netifaces to get network interfaces.
 import os, time, netifaces, sys, logging, subprocess, ctypes, AppKit
 import platform
 from scapy.all import sniff # sniff to sniff arp packets.
 
-requests = []
-replies_count = {}
-notification_issued = []
+connection_request = []
+numOfReplies = {}
+timeAtRequest = {}
+sent_notifications = []
 required_modules = ["netifaces", "scapy", "AppKit"]
 
-ipaddr = ""
-broadcast = ""
+ip_addr = ""
+broadcast_addr = ""
 
 # Set maximum number of ARP reply packets. If computer receives 7 ARP reply packets then notifies user.
 request_threshold = 7
 
+request_time_limit = 60
 
 def MacSpoofScanner():
     # determine if user has root permissions
@@ -55,67 +53,39 @@ def MacSpoofScanner():
     sniff(filter = "arp", prn = packet_filter, store = 0)
 
 
-
-"""
-def spoofChecker (source, mac, destintion):
-    if destination == broastcast:
-        if not mac in replies_count:
-            replies_count[mac] = 0
-
-    if not source in requests and source != local_ip:
-        if not mac in replies_count:
-            replies_count[mac] = 0
-        else:
-            replies_count[mac] += 1
-
-        logging.warning("Request count {}".format(mac, replies_count[mac]))
-
-        # Check whether or not number of replies reach a threshold and check for whether ir not the notification is already displayed
-        if (replies_count[mac] > request_threshold) and (not mac in notification_issued):
-            # Log the attack to the log file
-            logging.error("ARPSpoof Detected from MAC Address {}".format(mac))
-
-            # if spoof detected, then issue a notification
-            macNotification("Spoof Notification", "Your networked is under attacked", "Detected from {}.".format(mac))
-
-            # Add to notification_issued list so that the notification won't be repeated.
-            notification_issued.append(mac)
-        else:
-            if source in requests:
-                requests.remove(source)
-"""
-
-
 def spoofChecker (source, mac, destination):
-    if destination == broadcast:
-        if not mac in replies_count:
-            replies_count[mac] = 0
+    if destination == broadcast_addr and mac not in numOfReplies:
+            numOfReplies[mac] = 0
+            timeAtRequest[mac_addr] = calendar.timegm(time.gmtime())
 
-    if not source in requests and source != ipaddr:
-        if not mac in replies_count:
-            replies_count[mac] = 0
+    if not source in connection_request and source != ip_addr:
+        if mac in numOfReplies:
+            numOfReplies[mac] += 1
         else:
-            replies_count[mac] += 1
+            numOfReplies[mac] = 0
+            timeAtRequest[mac_addr] = calendar.timegm(time.gmtime())
 
-        logging.warning("Request count {}".format(mac, replies_count[mac]))
+        logging.warning("Request count {}".format(mac, numOfReplies[mac]))
 
         # Check whether or not number of replies reach a threshold and check for whether if not the notification is already displayed
-        if (replies_count[mac] > request_threshold) and (not mac in notification_issued):
+        timeDiff = calendar.timegm(time.gmtime()) - timeAtRequest[mac_addr]
+        if numOfReplies[mac_addr] > request_limit and timeDiff < request_time_limit:
             # Log the attack to the log file
             logging.error("ARPSpoof Detected from MAC Address {}".format(mac))
 
-            # if spoof detected, then issue a notification
-            macNotification("Spoof Notification", "Your network is under attack", "Detected from {}.".format(mac))
+            if mac_addr not in sent_notifications:
+                # if spoof detected, then issue a notification
+                macNotification("Spoof Notification", "Your network is under attack", "Detected from {}.".format(mac))
 
-            # Add to notification_issued list so that the notification won't be repeated.
-            notification_issued.append(mac)
+                # Add to sent_notifications list so that the notification won't be repeated.
+                sent_notifications.append(mac)
 
-            # Once spoofing detected. Tell Mac to disconnect active wifi.
-            os.system("networksetup -setairportpower airport off")
+                # Once spoofing detected. Tell Mac to disconnect active wifi.
+                os.system("networksetup -setairportpower airport off")
 
     else:
-        if source in requests:
-            requests.remove(source)
+        if source in connection_request:
+            connection_request.remove(source)
 
 
 def packet_filter (packet):
@@ -124,8 +94,8 @@ def packet_filter (packet):
     destination = packet.sprintf("%ARP.pdst%")
     source_mac = packet.sprintf("%ARP.hwsrc%")
     op = packet.sprintf("%ARP.op%")
-    if source == ipaddr:
-        requests.append(destination)
+    if source == ip_addr:
+        connection_request.append(destination)
     if op == 'is-at':
         return spoofChecker(source, source_mac, destination)
 
@@ -135,17 +105,21 @@ def checkInterface(i, interface_list):
         interface = input("Please select the interface again: {}\n".format(str(interface_list)))
         checkInterface(interface, interface_list)
     else:
-        # Retrieve network addresses (IP, broadcast) from the network interfaces
+        # Retrieve network addresses (IP, broadcast_addr) from the network interfaces
         addrs = netifaces.ifaddresses(i)
         try:
-            ipaddr = addrs[netifaces.AF_INET][0]["addr"]
-            broadcast = addrs[netifaces.AF_INET][0]["broadcast"]
+            ip_addr = addrs[netifaces.AF_INET][0]["addr"]
+            broadcast_addr = addrs[netifaces.AF_INET][0]["broadcast"]
         except KeyError:
             exit("Cannot read address/broadcast address on interface {}".format(i))
 
 def formatLog():
-    # define logging format
-    logging.basicConfig(format='%(levelname)s: %(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', filename="ARP log - Mac.txt", filemode="a", level=logging.DEBUG)
+    # define logging format and log name
+    FORMAT = '%(asctime)s: %(message)s'
+    LOG_NAME = "ARP log - Windows.txt"
+
+    # create log with format defined above
+    logging.basicConfig(format=FORMAT, filename=LOG_NAME)
 
     # import available network interfaces
     available_interfaces = netifaces.interfaces()

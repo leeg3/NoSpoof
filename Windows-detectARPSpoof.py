@@ -103,12 +103,14 @@ def sortPackets(packet):
 
 # checks if a packet is part of an ARP spoof attack
 def checkARPspoof(source, mac_addr, destination):
-    # if the mac address is not in the list and destination of the received packet is the same as the broadcast address then add into list
+    # if the mac address is not in the list and destination of the received packet
+    # is the same as the broadcast address then add into list
     if mac_addr not in numOfReplies and broadcast_addr == destination:
         numOfReplies[mac_addr] = 0
         timeAtRequest[mac_addr] = calendar.timegm(time.gmtime())
 
-    # if the source IP is found in the connection request and it is not the ip_addr, then increment otherwise reset to 0 and reset time
+    # if the source IP is found in the connection request and it is not the ip_addr
+    # then increment otherwise reset to 0 and reset time
     if source not in connection_request and source != ip_addr:
         if mac_addr in numOfReplies:
             numOfReplies[mac_addr] += 1
@@ -119,7 +121,9 @@ def checkARPspoof(source, mac_addr, destination):
         # add a warning entry into log about an ARPSpoofing attempt
         logging.warning("ARP reply from {}, Request count #{}".format(mac_addr, numOfReplies[mac_addr]))
 
-        # If the number of replies from a single source is more than the limit, add an entry into the log. Send notification if one has not been sent already, then add to sent_notifications list and disableWifi on machine
+        # If the number of replies from a single source is more than the limit,
+        # add an entry into the log. Send notification if one has not been sent already,
+        # then add to sent_notifications list and disableWifi on machine
         timeDiff = calendar.timegm(time.gmtime()) - timeAtRequest[mac_addr]
         if numOfReplies[mac_addr] > request_limit and timeDiff < request_time_limit:
             logging.error("Detected ARPSpoofing from {}".format(mac_addr))
